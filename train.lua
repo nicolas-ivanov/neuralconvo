@@ -82,8 +82,7 @@ for epoch = 1, options.maxEpoch do
         target = target:cl()
       end
 
---      local err = model:train(input, target)
-      local err = model:train(input, input)
+      local err = model:train(input, target)
 
       -- Check if error is NaN. If so, it's probably a bug.
       if err ~= err then

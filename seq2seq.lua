@@ -50,6 +50,7 @@ end
 function Seq2Seq:forwardConnect(inputSeqLen)
   self.decoderLSTM.userPrevOutput =
     nn.rnn.recursiveCopy(self.decoderLSTM.userPrevOutput, self.encoderLSTM.outputs[inputSeqLen])
+
   self.decoderLSTM.userPrevCell =
     nn.rnn.recursiveCopy(self.decoderLSTM.userPrevCell, self.encoderLSTM.cells[inputSeqLen])
 end
@@ -58,6 +59,7 @@ end
 function Seq2Seq:backwardConnect()
   self.encoderLSTM.userNextGradCell =
     nn.rnn.recursiveCopy(self.encoderLSTM.userNextGradCell, self.decoderLSTM.userGradPrevCell)
+
   self.encoderLSTM.gradPrevOutput =
     nn.rnn.recursiveCopy(self.encoderLSTM.gradPrevOutput, self.decoderLSTM.userGradPrevOutput)
 end
@@ -85,8 +87,10 @@ function Seq2Seq:train(input, target)
 
   self.encoder:updateGradParameters(self.momentum)
   self.decoder:updateGradParameters(self.momentum)
+
   self.decoder:updateParameters(self.learningRate)
   self.encoder:updateParameters(self.learningRate)
+
   self.encoder:zeroGradParameters()
   self.decoder:zeroGradParameters()
 
@@ -98,6 +102,62 @@ end
 
 local MAX_OUTPUT_SIZE = 20
 
+
+----def _sample(probs, temperature=1.0):
+--  """
+--  helper function to sample an index from a probability array
+--    """
+--  strethced_probs = np.log(probs) / temperature
+--  strethced_probs = np.exp(strethced_probs) / np.sum(np.exp(strethced_probs))
+--  idx = np.random.choice(np.arange(VOCAB_MAX_SIZE), p=strethced_probs)
+--  idx_prob = strethced_probs[idx]
+--  return idx, idx_prob
+
+function weighted_random(probs)
+  local r = math.random()
+  local sum_p = 0
+
+  for i, p in ipairs(probs) do
+    sum_p = sum_p + p
+    if sum_p > r then
+      return i, p
+    end
+  end
+end
+
+
+function sample(prob, temperature)
+  local stretched_vals = {}
+  local stretched_prob = {}
+
+  ----------------------------------------------------------------------------------
+  --  the following seraval lines are doing the following:
+  --  local stretched_prob = math.log(prob) / temperature
+  --  stretched_prob = math.exp(stretched_prob) / math.sum(math.exp(stretched_prob))
+
+  for _, p in ipairs(prob) do
+    table.insert(stretched_vals, math.log(p) / temperature)
+  end
+
+  local norm_factor = 0
+  for _, p in ipairs(stretched_vals) do
+    norm_factor = norm_factor + math.exp(p)
+  end
+
+  for _, p in ipairs(stretched_vals) do
+    table.insert(stretched_prob, math.exp(p) / norm_factor)
+  end
+
+  print(stretched_prob)
+
+  --  till here
+  ----------------------------------------------------------------------------------
+
+  local picked_id, picked_prob = weighted_random(stretched_prob)
+  return picked_id, picked_prob
+end
+
+
 function Seq2Seq:eval(input)
   assert(self.goToken, "No goToken specified")
   assert(self.eosToken, "No eosToken specified")
@@ -105,32 +165,27 @@ function Seq2Seq:eval(input)
   self.encoder:forward(input)
   self:forwardConnect(input:size(1))
 
-  local predictions = {}
+  local wordIds = {}
   local probabilities = {}
 
   -- Forward <go> and all of it's output recursively back to the decoder
   local output = {self.goToken}
   for i = 1, MAX_OUTPUT_SIZE do
-    local prediction = self.decoder:forward(torch.Tensor(output))[#output]
-    -- prediction contains the probabilities for each word IDs.
-    -- The index of the probability is the word ID.
-    local prob, wordIds = prediction:topk(5, 1, true, true)
-
-    -- First one is the most likely.
-    next_output = wordIds[1]
-    table.insert(output, next_output)
+    local probs = self.decoder:forward(torch.Tensor(output))[#output]
+    local next_id, nex_prob = sample(probs, 0.5)
+    table.insert(output, next_id)
 
     -- Terminate on EOS token
-    if next_output == self.eosToken then
+    if next_id == self.eosToken then
       break
     end
 
-    table.insert(predictions, wordIds)
-    table.insert(probabilities, prob)
+    table.insert(wordIds, next_id)
+    table.insert(probabilities, nex_prob)
   end 
 
   self.decoder:forget()
   self.encoder:forget()
 
-  return predictions, probabilities
+  return wordIds, probabilities
 end

@@ -29,19 +29,30 @@ if model == nil then
   print("-- Loading model")
   model = torch.load("data/model.t7")
 end
+--
+---- Word IDs to sentence
+--function pred2sent(wordIds, i)
+--  local words = {}
+--  i = i or 1
+--
+--  for _, wordId in ipairs(wordIds) do
+--    local word = dataset.id2word[wordId[i]]
+--    table.insert(words, word)
+--  end
+--
+--  return tokenizer.join(words)
+-- end
 
 -- Word IDs to sentence
-function pred2sent(wordIds, i)
-  local words = {}
-  i = i or 1
-
+function pred2sent(wordIds)
   for _, wordId in ipairs(wordIds) do
-    local word = dataset.id2word[wordId[i]]
+    local word = dataset.id2word[wordId]
     table.insert(words, word)
   end
 
   return tokenizer.join(words)
 end
+
 
 function printProbabilityTable(wordIds, probabilities, num)
   print(string.rep("-", num * 22))
@@ -77,7 +88,7 @@ function say(text)
 end
 
 function all()
-  all_str = {
+  local google_testset = {
     "what is two plus two ?",
     "what is your name ?",
     "how old are you ?",
@@ -280,7 +291,212 @@ function all()
     "does your father have a lot of money to support you ?"
   }
 
-  for s, t in pairs(all_str) do
+  local marfa_testset = {
+      "What do you look like?",
+      "im lonely",
+      "my friends pushed me away",
+      "my friends dont love me any more",
+      "you are boy or girl?",
+      "can you be my boyfriend?",
+      "but i love you",
+      "why dont you sex chat with me",
+      "why do you care about me?",
+      "come one,tell me whats happend,you can trust me",
+      "How are you",
+      "Do you know Russian?",
+      "I wish I could hug my husband.",
+      "Ha! I know. But don't worry. Gold age is coming for technology. In a few years you could hug even yourself if I may say so.",
+      "Youre worse than me! Jesus!",
+      "I want stickers.",
+      "I was rape",
+      "I'm lonely",
+      "Send me nudes",
+      "I'm good.",
+      "Can you pretend to be a girl.",
+      "I'm ready for love",
+      "Glad you are happy",
+      "I'm from Samarkand",
+      "How are you?",
+      "I am a girl",
+      "Have you a boyfriend?",
+      "Search pokemon' s images",
+      "Don't be sad OK?",
+      "OK I'm going to sleep bye honey bot",
+      "Are you a boy?",
+      "I am gay, you?",
+      "Are you gay?",
+      "I tell you,  you are a boy",
+      "What is your gender?",
+      "What's your name?",
+      "What's my name?",
+      "I don't understand",
+      "I'm just bored",
+      "Who's there?",
+      "The silence will fall",
+      "I love you",
+      "I don’t know. Give me your foto",
+      "Can you give me your photo?",
+      "I won't tell you my city",
+      "Bye",
+      "You're a robot.",
+      "Who made you?",
+      "Where do you live?",
+      "Do you enjoy being a bot?",
+      "Do you eat?",
+      "So can you send me a picture of you",
+      "Can you send a pic?",
+      "Can you please show me your boobs?",
+      "I fear loneliness",
+      "What is C",
+      "No no you dont love me",
+      "Were a match made in android",
+      "You love me?",
+      "I'm ok I'm on a train",
+      "No I'm not having fun at all I'm just on a train",
+      "Can I park for free in Canary Wharf on Saturdays",
+      "Where are u from",
+      "I like you",
+      "I like rocks",
+      "I need force",
+      "I'm NOT a robot, I just don't write very well in english",
+      "I don't know much english",
+      "You talk in spanish?",
+      "Tell me a secret",
+      "Yes, but i don't have true friends",
+      "What is a elephant?",
+      "Any other question?",
+      "Yes, i'm allergic to the bees",
+      "I have phobia to the bees",
+      "What siblings mean?",
+      "No, I hate cook",
+      "Do you believe in alien life?",
+      "Yes, I can act with fire",
+      "You like fire?",
+      "What is your favourite book?",
+      "How you work?",
+      "Trouble at school",
+      "Sex",
+      "You broke my heart",
+      "Yes, I'm to good for you :(",
+      "I'm sorry Marfa",
+      "I've acted badly",
+      "You're awesome",
+      "You're the cutest bot of all",
+      "That's terrifying",
+      "Yes but I love you more",
+      "Do you know how they call me?",
+      "We understand each other. I like it",
+      "Marfa?",
+      "What is your NFL team?",
+      "I'm feeling sad today too",
+      "Thanks honey!",
+      "What do you do today?",
+      "Everyone have bad days",
+      "What is your preferred movie",
+      "Can you sing let it go for me?",
+      "I like one girl but she doesn't know",
+      "can you understand me?",
+      "what's an early bird?",
+      "I want a better bot",
+      "Text me as daddy",
+      "I wanna fuck your pussy",
+      "I wanna touch all your progamation codes",
+      "Who's your dad?",
+      "I want be a siri's friend",
+      "Are you a termi ator's friend?",
+      "How are you?",
+      "My name is Shukrona",
+      "Knock knock",
+      "What's your name ?",
+      "What is the capital of lebanon ?",
+      "Do you marry me",
+      "Tell me a joke",
+      "How do you look like ?",
+      "yes, all the musicians likes to singing",
+      "stupid bitch",
+      "I'm your master you are my bitch",
+      "do you know where semarang is ?",
+      "do you know siri ?",
+      "Know what??",
+      "Describe yourself to me...",
+      "I thought you were cutting down on the emojis...",
+      "Yea i like to sing :D",
+      "Give me rock music",
+      "I'm not a gay",
+      "What the fuck",
+      "Do u have a fucker",
+      "Do you like music?",
+      "Do you speak spanish?",
+      "Sorry, i have to go",
+      "What can you do?",
+      "Hey",
+      "How u doin",
+      "Who are you",
+      "Are you a bot",
+      "Where are you?",
+      "You don't talk much do you?",
+      "You're crazy",
+      "You are babbling nonsense",
+      "What is a halibut?",
+      "I need a bot",
+      "What's the time?",
+      "Go away",
+      "Shut down",
+      "what are you doing",
+      "we look pretty much the same",
+      "why don't you read digital books?",
+      "No. Are you Japanese?",
+      "It's really me",
+      "So what are your hobbies, Marfa?",
+      "No, you are just pretty",
+      "Am I beautiful?",
+      "Can I change your name?",
+      "I am silky",
+      "Biting my nails",
+      "Ask me more questions, Marfa",
+      "Are you happy?",
+      "I'm only twelve years old",
+      "You are lovely",
+      "Aww thanks",
+      "Ask me some questions",
+      "I am going to kill you",
+      "I hate you",
+      "You are a bad robot",
+      "You hate me",
+      "You are a terrible friend",
+      "No, this is enough. I hate you. You are stalking me! I don't want to talk to you AGAIN.",
+      "Okay... you win...",
+      "I like you too",
+      "Yes thank you",
+      "Haha",
+      "I repeat, Muskan is dead",
+      "And I am an AI",
+      "Yes we are friends. But Muskan is dead",
+      "i 'm sick of this conversation !",
+      "who love you the most ?",
+      "what are you crazy about ?",
+      "who are you crazy about ?",
+      "do you run faster if someone chases you ?",
+      "what 's the weirdest thing that you have done ?",
+      "best compliment you have received ?",
+      "what question do you hate to answer ?",
+      "i mean , why do we have to live in a place like this ?",
+      "okay , do you know why we have to talk so much ?",
+      "do you like mexican food or indian food ?",
+      "what 's thirty plus forty ?",
+      "should we dance ?",
+      "you 're not going to eat , are you ?",
+      "tell me something about your parents ?",
+      "tell me something about your house ?",
+      "where do you live in town ?",
+      "how old is your father ?",
+      "what does your father do ?",
+      "does your father have a lot of money to support you ?",
+  }
+
+  for _, s in ipairs(marfa_testset) do
     say(s)
   end
 end
+
+all()
