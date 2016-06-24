@@ -45,6 +45,8 @@ end
 
 -- Word IDs to sentence
 function pred2sent(wordIds)
+  local words = {}
+
   for _, wordId in ipairs(wordIds) do
     local word = dataset.id2word[wordId]
     table.insert(words, word)

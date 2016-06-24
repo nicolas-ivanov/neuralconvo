@@ -126,7 +126,7 @@ function weighted_random(probs)
 end
 
 
-function sample(prob, temperature)
+function sample(log_prob, temperature)
   local stretched_vals = {}
   local stretched_prob = {}
 
@@ -135,8 +135,8 @@ function sample(prob, temperature)
   --  local stretched_prob = math.log(prob) / temperature
   --  stretched_prob = math.exp(stretched_prob) / math.sum(math.exp(stretched_prob))
 
-  for _, p in ipairs(prob) do
-    table.insert(stretched_vals, math.log(p) / temperature)
+  for _, log_p in ipairs(log_prob) do
+    table.insert(stretched_vals, log_p / temperature)
   end
 
   local norm_factor = 0
@@ -148,13 +148,19 @@ function sample(prob, temperature)
     table.insert(stretched_prob, math.exp(p) / norm_factor)
   end
 
-  print(stretched_prob)
-
   --  till here
   ----------------------------------------------------------------------------------
 
   local picked_id, picked_prob = weighted_random(stretched_prob)
   return picked_id, picked_prob
+end
+
+function tensor2table(t1)
+  local t2 = {}
+  for i=1,t1:size(1) do
+    t2[i]= t1[i]
+  end
+  return t2
 end
 
 
@@ -171,8 +177,9 @@ function Seq2Seq:eval(input)
   -- Forward <go> and all of it's output recursively back to the decoder
   local output = {self.goToken}
   for i = 1, MAX_OUTPUT_SIZE do
-    local probs = self.decoder:forward(torch.Tensor(output))[#output]
-    local next_id, nex_prob = sample(probs, 0.5)
+    local log_probs = self.decoder:forward(torch.Tensor(output))[#output]
+    log_probs = tensor2table(log_probs)
+    local next_id, nex_prob = sample(log_probs, 0.5)
     table.insert(output, next_id)
 
     -- Terminate on EOS token
